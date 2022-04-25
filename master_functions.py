@@ -15,12 +15,18 @@ def load_in_taxonomy_json():
     return orgs
 
 
-def get_correct_preds_percentages(df, orgs: dict, row_name: str):
+def get_correct_preds_percentages(df: pd.DataFrame, orgs: dict, row_name: str, sample: bool = True, report: bool = False):
     ranks = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
     # groupby viruses, within these groups find rows with max values in '1' and return the indecies
     mask = df.groupby('virus')['1'].transform(max) == df['1']
     # create a df for 'best' predictions
     df_best = df.loc[mask, ['virus', 'host', '1']]
+    if report:
+        print(f'{row_name} sizes of groups: {df_best.shape}')
+    if sample:
+        # get one virus from each group
+        df_best = df_best.groupby('virus').apply(pd.DataFrame.sample, 
+                n=1, axis=0).reset_index(drop=True)
 
     def lookup_taxonomy(x, rank: str, orgs: dict):
         rank_idx = orgs['host'][x['host']]['lineage_ranks'].index(rank)
