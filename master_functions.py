@@ -157,6 +157,17 @@ def draw_precision_recall_curve(dfs: list, names: list, plot_name: str):
     return
 
 
+def draw_gini_importances(importances, std, X):
+    forest_importances = pd.Series(importances, index=X.columns)
+
+    fig, ax = plt.subplots()
+    forest_importances.plot.bar(yerr=std, ax=ax)
+    ax.set_title("Feature importances using MDI")
+    ax.set_ylabel("Mean decrease in impurity")
+    fig.tight_layout()
+    return
+
+
 def get_shap_values(estimators: list, X_learn: pd.DataFrame, learning_df: pd.DataFrame):
     import shap
     def warn(*args, **kwargs):
@@ -344,3 +355,18 @@ def plot_all_gridsearch_results(grid):
     plt.legend()
     plt.show()
     return
+
+
+
+
+def calculate_vif(features: list, large_df: pd.DataFrame):
+    # Compute VIF data for each independent variable (considered high if > 10)
+    from statsmodels.stats.outliers_influence import variance_inflation_factor
+    features.append('y')
+    df_chosen = large_df[features]
+    vif = pd.DataFrame()
+    vif["features"] = df_chosen.columns
+    vif["vif_Factor"] = [variance_inflation_factor(df_chosen.values, i) \
+                        for i in range(df_chosen.shape[1])]
+    features.remove('y')
+    return vif
