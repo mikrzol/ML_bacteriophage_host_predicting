@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.decomposition import PCA
 
 def load_in_taxonomy_json():
@@ -22,7 +22,7 @@ def get_correct_preds_percentages(df: pd.DataFrame, orgs: dict, row_name: str, s
     # create a df for 'best' predictions
     df_best = df.loc[mask, ['virus', 'host', '1']]
     if report:
-        print(f'{row_name} sizes of groups: {df_best.shape}')
+        print(f'{row_name} - num of preds with highest prob: {df_best.shape[0]}, mean = {df_best.groupby("virus").size().mean():.2f}')
     if sample:
         # get one virus from each group
         df_best = df_best.groupby('virus').apply(pd.DataFrame.sample, 
@@ -219,12 +219,19 @@ def get_shap_values_lrc(estimators: list, X_learn: pd.DataFrame, learning_df: pd
     return vals
 
 
-def get_pca(X, y, components: int):
+def get_pca(X, y, components: int, scree_plot: bool = False):
     # check for normal distribution and scale appropriately
-    X_pca = Normalizer().fit_transform(X)
+    X_pca = StandardScaler().fit_transform(X)
     # perform PCA
     pca = PCA(n_components=components)
     X_pca = pca.fit_transform(X_pca)
+    if scree_plot:
+        pc_vals = np.arange(pca.n_components_) + 1
+        plt.bar(pc_vals, pca.explained_variance_ratio_)
+        plt.title('PCA scree plot')
+        plt.xlabel('Principal Component')
+        plt.ylabel('Variance explained')
+        plt.show()
     cols = [f'component {i+1}' for i in range(0, components)]
     principal_df = pd.DataFrame(data=X_pca, columns=cols)
     return pd.concat([principal_df, y], axis=1)
@@ -361,8 +368,6 @@ def plot_all_gridsearch_results(grid):
     plt.legend()
     plt.show()
     return
-
-
 
 
 def calculate_vif(features: list, large_df: pd.DataFrame):
