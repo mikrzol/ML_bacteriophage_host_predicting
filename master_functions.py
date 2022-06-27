@@ -34,12 +34,12 @@ def get_correct_preds_percentages(df: pd.DataFrame, orgs: dict, row_name: str, s
             orgs['virus'][x['virus']]['host']['lineage_names'][rank_idx] else 0
 
     for rank in ranks:
-        df_best[f'{rank}_correct'] = df_best.apply(lookup_taxonomy, rank=rank, orgs=orgs, axis=1)
-        df_best[f'{rank}_correct'] = df_best[f'{rank}_correct'].astype('bool')
+        df_best[f'{rank} correct'] = df_best.apply(lookup_taxonomy, rank=rank, orgs=orgs, axis=1)
+        df_best[f'{rank} correct'] = df_best[f'{rank} correct'].astype('bool')
     df_best.drop(['virus', 'host', '1'], axis=1, inplace=True)
     df_to_return = pd.DataFrame(index=[f'{row_name}'], columns=df_best.columns)
     for rank in ranks:
-        df_to_return[f'{rank}_correct'] = df_best[f"{rank}_correct"].sum() / len(df_best.index)*100
+        df_to_return[f'{rank} correct'] = round(df_best[f"{rank} correct"].sum() / len(df_best.index)*100, 2)
     return df_to_return
 
 
@@ -152,10 +152,10 @@ def draw_precision_recall_curve(dfs: list, names: list, plot_name: str):
         index = np.argmax(f1_scores)
 
         line = plt.plot(recall, precision, label=f'AUC ({names[i]}) = {auc_temp:.2f}', color=color)
-        plt.plot(recall[index], precision[index], marker='o', color=color) # marker
-        plt.text(recall[index], precision[index]+(0.03 if i%2 == 0 else -0.05), \
+        # plt.plot(recall[index], precision[index], marker='o', color=color) # marker
+        # plt.text(recall[index], precision[index]+(0.03 if i%2 == 0 else -0.05), \
             # f'x={recall[index]:.2f}, y={precision[index]:.2f}', color=color)
-            f'max_f1=({np.amax(f1_scores):.2f})', color=color)
+            # f'max_f1=({np.amax(f1_scores):.2f})', color=color)
     plt.title(f'{plot_name}', size=20)
     plt.xlabel('Recall', size=14)
     plt.ylabel('Precision', size=14)
@@ -221,7 +221,7 @@ def get_shap_values_lrc(estimators: list, X_learn: pd.DataFrame, learning_df: pd
 
 def get_pca(X, y, components: int, scree_plot: bool = False):
     # check for normal distribution and scale appropriately
-    X_pca = StandardScaler().fit_transform(X)
+    X_pca = Normalizer().fit_transform(X)
     # perform PCA
     pca = PCA(n_components=components)
     X_pca = pca.fit_transform(X_pca)
